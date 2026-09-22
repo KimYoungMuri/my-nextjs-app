@@ -11,10 +11,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export type Book = {
+export type Artist = {
   id: number;
-  title: string;
-  author: string;
-  year: number | null;
+  name: string;
+  genre: string;
+  era: string | null;
+  notable_work: string | null;
   created_at?: string;
 };
