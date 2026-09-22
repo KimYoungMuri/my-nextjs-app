@@ -1,27 +1,30 @@
-import { supabase, type Book } from "@/lib/supabase";
+import { supabase, type Artist } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-async function getBooks(): Promise<{ books: Book[]; error: string | null }> {
+async function getArtists(): Promise<{
+  artists: Artist[];
+  error: string | null;
+}> {
   const { data, error } = await supabase
-    .from("books")
-    .select("id, title, author, year")
+    .from("artists")
+    .select("id, name, genre, era, notable_work")
     .order("id", { ascending: true });
 
   if (error) {
-    return { books: [], error: error.message };
+    return { artists: [], error: error.message };
   }
 
-  return { books: data ?? [], error: null };
+  return { artists: data ?? [], error: null };
 }
 
 export default async function Home() {
-  const { books, error } = await getBooks();
+  const { artists, error } = await getArtists();
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-16">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Books</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Artists</h1>
         <p className="text-zinc-600 dark:text-zinc-400">
           Rows loaded from Supabase
         </p>
@@ -29,27 +32,27 @@ export default async function Home() {
 
       {error ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-          Failed to load books: {error}
+          Failed to load artists: {error}
         </p>
-      ) : books.length === 0 ? (
-        <p className="text-zinc-600 dark:text-zinc-400">No books found.</p>
+      ) : artists.length === 0 ? (
+        <p className="text-zinc-600 dark:text-zinc-400">No artists found.</p>
       ) : (
         <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-          {books.map((book) => (
-            <li
-              key={book.id}
-              className="flex items-baseline justify-between gap-4 px-4 py-3"
-            >
-              <div>
-                <p className="font-medium">{book.title}</p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {book.author}
-                </p>
+          {artists.map((artist) => (
+            <li key={artist.id} className="space-y-1 px-4 py-4">
+              <div className="flex items-baseline justify-between gap-4">
+                <p className="font-medium">{artist.name}</p>
+                {artist.era != null && (
+                  <span className="text-sm text-zinc-500">{artist.era}</span>
+                )}
               </div>
-              {book.year != null && (
-                <span className="text-sm tabular-nums text-zinc-500">
-                  {book.year}
-                </span>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                {artist.genre}
+              </p>
+              {artist.notable_work != null && (
+                <p className="text-sm text-zinc-500">
+                  Notable: {artist.notable_work}
+                </p>
               )}
             </li>
           ))}
