@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hello World",
-  description: "Simple Hello World app",
+  title: "Books",
+  description: "Book list from Supabase",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
