@@ -8,7 +8,7 @@ export async function generateWeekendCaption(prompt: string): Promise<string> {
 
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-1.5-flash",
     contents: `You write chronically-online captions for Columbia students exploring New York City on weekends.
 
 Rules:
