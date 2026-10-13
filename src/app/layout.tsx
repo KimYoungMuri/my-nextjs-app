@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Artists",
-  description: "Artists list with Supabase auth",
+  title: "Weekend Caps",
+  description: "AI NYC weekend captions you can generate and rate",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

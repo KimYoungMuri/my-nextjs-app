@@ -13,10 +13,16 @@ export async function Nav() {
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-6 py-4">
         <div className="flex items-center gap-4 text-sm">
           <Link href="/" className="font-medium hover:underline">
+            Feed
+          </Link>
+          <Link href="/artists" className="hover:underline">
             Artists
           </Link>
           {user ? (
             <>
+              <Link href="/generate" className="hover:underline">
+                Generate
+              </Link>
               <Link href="/dashboard" className="hover:underline">
                 Dashboard
               </Link>
