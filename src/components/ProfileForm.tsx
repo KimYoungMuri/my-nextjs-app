@@ -18,6 +18,33 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  async function saveProfile(
+    userId: string,
+    values: {
+      first_name: string | null;
+      last_name: string | null;
+      avatar_url: string | null;
+    },
+  ) {
+    const supabase = createClient();
+    const { data, error: upsertError } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: userId,
+          first_name: values.first_name,
+          last_name: values.last_name,
+          avatar_url: values.avatar_url,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" },
+      )
+      .select("id, first_name, last_name, avatar_url")
+      .single();
+
+    return { data, error: upsertError };
+  }
+
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
@@ -34,18 +61,19 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          first_name: firstName.trim() || null,
-          last_name: lastName.trim() || null,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
+      const { data, error: saveError } = await saveProfile(user.id, {
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+        avatar_url: avatarUrl,
+      });
 
-      if (updateError) {
-        setError(updateError.message);
+      if (saveError) {
+        setError(saveError.message);
+        return;
+      }
+
+      if (!data) {
+        setError("Profile did not save. Run supabase/profiles.sql in Supabase.");
         return;
       }
 
@@ -82,7 +110,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         .upload(path, file, { upsert: true, contentType: file.type });
 
       if (uploadError) {
-        setError(uploadError.message);
+        setError(
+          `Photo upload failed: ${uploadError.message}. Make sure you ran supabase/profiles.sql (avatars bucket).`,
+        );
         return;
       }
 
@@ -92,16 +122,19 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
       setAvatarUrl(publicUrl);
 
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
+      const { data, error: saveError } = await saveProfile(user.id, {
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+        avatar_url: publicUrl,
+      });
 
-      if (updateError) {
-        setError(updateError.message);
+      if (saveError) {
+        setError(saveError.message);
+        return;
+      }
+
+      if (!data) {
+        setError("Photo uploaded, but profile row did not save.");
         return;
       }
 

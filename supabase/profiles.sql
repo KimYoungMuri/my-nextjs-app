@@ -41,6 +41,11 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Backfill profiles for users who signed up before the trigger existed
+insert into public.profiles (id)
+select id from auth.users
+on conflict (id) do nothing;
+
 -- Public avatars bucket (images live in Storage, not in the DB)
 insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
