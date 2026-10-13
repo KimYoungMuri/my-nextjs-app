@@ -1,4 +1,5 @@
-import { supabase, type Artist } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
+import type { Artist } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -6,6 +7,7 @@ async function getArtists(): Promise<{
   artists: Artist[];
   error: string | null;
 }> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("artists")
     .select("id, name, genre, era, notable_work")
@@ -26,7 +28,7 @@ export default async function Home() {
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Artists</h1>
         <p className="text-zinc-600 dark:text-zinc-400">
-          Rows loaded from Supabase
+          Public list from Supabase. Sign in to open Dashboard and Profile.
         </p>
       </header>
 
