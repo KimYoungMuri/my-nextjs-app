@@ -4,10 +4,19 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const oauthError = searchParams.get("error");
+  const oauthDescription = searchParams.get("error_description");
   let next = searchParams.get("next") ?? "/dashboard";
 
   if (!next.startsWith("/")) {
     next = "/dashboard";
+  }
+
+  if (oauthError) {
+    const message = oauthDescription || oauthError;
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent(message)}`,
+    );
   }
 
   if (code) {
@@ -28,7 +37,13 @@ export async function GET(request: Request) {
 
       return NextResponse.redirect(`${origin}${next}`);
     }
+
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent(error.message)}`,
+    );
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  return NextResponse.redirect(
+    `${origin}/login?error=${encodeURIComponent("Missing auth code. Add this site URL to Supabase Redirect URLs.")}`,
+  );
 }

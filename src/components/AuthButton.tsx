@@ -8,12 +8,22 @@ export function SignInWithGoogleButton() {
     const origin = window.location.origin;
 
     // Assignment requires redirect URI exactly /auth/callback (no extra query params).
-    await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${origin}/auth/callback`,
+        skipBrowserRedirect: true,
       },
     });
+
+    if (error) {
+      window.location.href = `/login?error=${encodeURIComponent(error.message)}`;
+      return;
+    }
+
+    if (data.url) {
+      window.location.href = data.url;
+    }
   }
 
   return (
