@@ -34,33 +34,35 @@ export function VoteButtons({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col items-center gap-1 rounded-2xl bg-[color-mix(in_srgb,var(--background)_70%,white)] px-2 py-2">
       <button
         type="button"
         disabled={isPending}
         onClick={() => vote(1)}
-        className={`rounded-md border px-2 py-1 text-sm disabled:opacity-50 ${
+        className={`grid h-8 w-8 place-items-center rounded-full text-sm transition disabled:opacity-50 ${
           myVote === 1
-            ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-            : "border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            ? "bg-[var(--accent)] text-white"
+            : "text-[var(--muted)] hover:bg-white hover:text-[var(--ink)]"
         }`}
-        aria-label="Upvote"
+        aria-label={signedIn ? "Upvote" : "Sign in to upvote"}
+        title={signedIn ? "Upvote" : "Sign in to vote"}
       >
         ▲
       </button>
-      <span className="min-w-6 text-center text-sm tabular-nums font-medium">
+      <span className="min-w-6 text-center text-sm tabular-nums font-semibold text-[var(--ink)]">
         {score}
       </span>
       <button
         type="button"
         disabled={isPending}
         onClick={() => vote(-1)}
-        className={`rounded-md border px-2 py-1 text-sm disabled:opacity-50 ${
+        className={`grid h-8 w-8 place-items-center rounded-full text-sm transition disabled:opacity-50 ${
           myVote === -1
-            ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-            : "border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            ? "bg-[var(--ink)] text-white"
+            : "text-[var(--muted)] hover:bg-white hover:text-[var(--ink)]"
         }`}
-        aria-label="Downvote"
+        aria-label={signedIn ? "Downvote" : "Sign in to downvote"}
+        title={signedIn ? "Downvote" : "Sign in to vote"}
       >
         ▼
       </button>

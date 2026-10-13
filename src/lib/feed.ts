@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import type { GenerationWithStats, VoteValue } from "@/lib/types";
 
-export async function getFeed(): Promise<{
+export type FeedSort = "hot" | "new";
+
+export async function getFeed(sort: FeedSort = "hot"): Promise<{
   items: GenerationWithStats[];
   error: string | null;
   userId: string | null;
@@ -29,7 +31,10 @@ export async function getFeed(): Promise<{
   const authorIds = [...new Set(generations.map((g) => g.user_id))];
 
   const [{ data: votes }, { data: profiles }] = await Promise.all([
-    supabase.from("votes").select("generation_id, user_id, value").in("generation_id", ids),
+    supabase
+      .from("votes")
+      .select("generation_id, user_id, value")
+      .in("generation_id", ids),
     supabase
       .from("profiles")
       .select("id, first_name, last_name")
@@ -64,7 +69,14 @@ export async function getFeed(): Promise<{
     author_name: nameById.get(generation.user_id) ?? null,
   }));
 
-  items.sort((a, b) => b.score - a.score || b.id - a.id);
+  if (sort === "new") {
+    items.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  } else {
+    items.sort((a, b) => b.score - a.score || b.id - a.id);
+  }
 
   return { items, error: null, userId: user?.id ?? null };
 }

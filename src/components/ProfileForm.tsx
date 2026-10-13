@@ -198,11 +198,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         <p className="text-sm text-green-700 dark:text-green-400">{message}</p>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-      >
+      <button type="submit" disabled={isPending} className="btn-primary disabled:opacity-60">
         {isPending ? "Saving…" : "Save profile"}
       </button>
     </form>

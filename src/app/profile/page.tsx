@@ -28,22 +28,28 @@ export default async function ProfilePage() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-16">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Profile</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          Update your name and upload a photo. Images are stored in Supabase
-          Storage, not in the database.
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">
+          Members only
+        </p>
+        <h1 className="display text-4xl font-semibold text-[var(--ink)]">
+          Profile
+        </h1>
+        <p className="text-[var(--muted)]">
+          Name + photo for the feed. Images live in Storage, not the database.
         </p>
       </header>
 
       {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+        <p className="panel px-4 py-3 text-[var(--bad)]">
           Failed to load profile: {error.message}
         </p>
       )}
 
-      <ProfileForm profile={resolvedProfile} />
+      <div className="panel p-5 sm:p-6">
+        <ProfileForm profile={resolvedProfile} />
+      </div>
     </main>
   );
 }

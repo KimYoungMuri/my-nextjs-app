@@ -9,37 +9,42 @@ export async function Nav() {
   } = await supabase.auth.getUser();
 
   return (
-    <nav className="border-b border-zinc-200 dark:border-zinc-800">
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-6 py-4">
-        <div className="flex items-center gap-4 text-sm">
-          <Link href="/" className="font-medium hover:underline">
-            Feed
+    <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--background)_82%,white)] backdrop-blur-md">
+      <nav className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-6 py-3.5">
+        <div className="flex items-center gap-5">
+          <Link href="/" className="display text-xl font-semibold text-[var(--ink)]">
+            Weekend Caps
           </Link>
-          <Link href="/artists" className="hover:underline">
-            Artists
-          </Link>
-          {user ? (
-            <>
-              <Link href="/generate" className="hover:underline">
-                Generate
-              </Link>
-              <Link href="/dashboard" className="hover:underline">
-                Dashboard
-              </Link>
-              <Link href="/profile" className="hover:underline">
-                Profile
-              </Link>
-            </>
-          ) : (
-            <Link href="/login" className="hover:underline">
-              Login
+          <div className="hidden items-center gap-3 text-sm text-[var(--muted)] sm:flex">
+            <Link href="/" className="hover:text-[var(--ink)]">
+              Feed
             </Link>
-          )}
+            {user ? (
+              <>
+                <Link href="/generate" className="hover:text-[var(--ink)]">
+                  Generate
+                </Link>
+                <Link href="/dashboard" className="hover:text-[var(--ink)]">
+                  Dashboard
+                </Link>
+                <Link href="/profile" className="hover:text-[var(--ink)]">
+                  Profile
+                </Link>
+              </>
+            ) : (
+              <Link href="/login" className="hover:text-[var(--ink)]">
+                Login
+              </Link>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <span className="hidden text-sm text-zinc-500 sm:inline">
+              <Link href="/generate" className="btn-primary text-sm sm:hidden">
+                Generate
+              </Link>
+              <span className="hidden max-w-40 truncate text-sm text-[var(--muted)] md:inline">
                 {user.email}
               </span>
               <SignOutButton />
@@ -48,7 +53,7 @@ export async function Nav() {
             <SignInWithGoogleButton />
           )}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 }
