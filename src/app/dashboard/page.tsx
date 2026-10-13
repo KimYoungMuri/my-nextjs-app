@@ -35,38 +35,41 @@ export default async function DashboardPage() {
     user.email;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
       <header className="space-y-2">
-        <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">
-          Gated route
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">
+          Members only
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          Your Weekend Caps activity — only visible when logged in.
+        <h1 className="display text-4xl font-semibold text-[var(--ink)]">
+          Your weekend stats
+        </h1>
+        <p className="text-[var(--muted)]">
+          A quick look at how loud you’ve been on the feed.
         </p>
       </header>
 
-      <section className="rounded-xl border border-zinc-200 p-6 dark:border-zinc-800">
-        <p className="text-sm text-zinc-500">Signed in as</p>
-        <p className="mt-1 text-lg font-medium">{displayName}</p>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          {user.email}
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900">
-            <p className="text-2xl font-semibold">{generationCount ?? 0}</p>
-            <p className="text-sm text-zinc-500">Captions generated</p>
+      <section className="panel space-y-5 p-6">
+        <div>
+          <p className="text-sm text-[var(--muted)]">Signed in as</p>
+          <p className="mt-1 text-xl font-semibold text-[var(--ink)]">
+            {displayName}
+          </p>
+          <p className="text-sm text-[var(--muted)]">{user.email}</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl bg-[color-mix(in_srgb,var(--accent)_10%,white)] p-4">
+            <p className="display text-3xl text-[var(--ink)]">
+              {generationCount ?? 0}
+            </p>
+            <p className="text-sm text-[var(--muted)]">Captions generated</p>
           </div>
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900">
-            <p className="text-2xl font-semibold">{voteCount ?? 0}</p>
-            <p className="text-sm text-zinc-500">Votes cast</p>
+          <div className="rounded-2xl bg-[color-mix(in_srgb,var(--ink)_6%,white)] p-4">
+            <p className="display text-3xl text-[var(--ink)]">{voteCount ?? 0}</p>
+            <p className="text-sm text-[var(--muted)]">Votes cast</p>
           </div>
         </div>
-        <Link
-          href="/generate"
-          className="mt-4 inline-block text-sm font-medium underline"
-        >
-          Generate another caption →
+        <Link href="/generate" className="btn-primary text-sm">
+          Generate another →
         </Link>
       </section>
     </main>

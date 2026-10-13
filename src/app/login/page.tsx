@@ -14,25 +14,30 @@ export default async function LoginPage({
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect(params.next?.startsWith("/") ? params.next : "/dashboard");
+    redirect(params.next?.startsWith("/") ? params.next : "/generate");
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-start justify-center gap-6 px-6 py-16">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          Use Google to access your profile and the gated dashboard.
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-6 px-6 py-16">
+      <div className="panel max-w-md space-y-5 p-6">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent)]">
+          Weekend Caps
         </p>
+        <h1 className="display text-3xl font-semibold text-[var(--ink)]">
+          Sign in to drop & vote
+        </h1>
+        <p className="text-[var(--muted)]">
+          Google login unlocks generating captions and rating the feed.
+        </p>
+
+        {params.error && (
+          <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[var(--bad)]">
+            Sign-in failed: {params.error}
+          </p>
+        )}
+
+        <SignInWithGoogleButton />
       </div>
-
-      {params.error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-          Sign-in failed: {params.error}
-        </p>
-      )}
-
-      <SignInWithGoogleButton />
     </main>
   );
 }

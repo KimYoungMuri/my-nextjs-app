@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createGeneration } from "@/app/actions/generations";
 
@@ -11,9 +12,9 @@ const SUGGESTIONS = [
   "washington square park people-watching",
 ];
 
-export function GenerateForm() {
+export function GenerateForm({ initialPrompt = "" }: { initialPrompt?: string }) {
   const router = useRouter();
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [caption, setCaption] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -37,55 +38,62 @@ export function GenerateForm() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="panel space-y-5 p-5 sm:p-6">
         <label className="block space-y-2 text-sm">
-          <span className="font-medium">What’s the vibe?</span>
+          <span className="font-semibold text-[var(--ink)]">What’s the vibe?</span>
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
             rows={3}
             maxLength={280}
             placeholder="e.g. walking across campus in borrowed boots"
-            className="w-full rounded-lg border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700"
+            className="w-full rounded-2xl border border-[var(--line)] bg-white/70 px-4 py-3 outline-none ring-[var(--accent)] focus:ring-2"
             disabled={isPending}
             required
           />
+          <span className="block text-right text-xs text-[var(--muted)]">
+            {prompt.length}/280
+          </span>
         </label>
 
-        <div className="flex flex-wrap gap-2">
-          {SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              disabled={isPending}
-              onClick={() => setPrompt(suggestion)}
-              className="rounded-full border border-zinc-300 px-3 py-1 text-xs hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-            >
-              {suggestion}
-            </button>
-          ))}
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+            Quick starts
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTIONS.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                disabled={isPending}
+                onClick={() => setPrompt(suggestion)}
+                className="rounded-full border border-[var(--line)] bg-white/60 px-3 py-1.5 text-xs text-[var(--ink)] hover:border-[var(--accent)]"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
+        {error && <p className="text-sm text-[var(--bad)]">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
+        <button type="submit" disabled={isPending} className="btn-primary disabled:opacity-60">
           {isPending ? "Generating…" : "Generate caption"}
         </button>
       </form>
 
       {caption && (
-        <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-          <p className="text-sm text-zinc-500">Fresh drop</p>
-          <p className="mt-2 text-lg font-medium leading-relaxed">{caption}</p>
-          <p className="mt-3 text-sm text-zinc-500">
-            Posted to the public feed — go upvote yours.
+        <div className="panel rise space-y-3 border-[color-mix(in_srgb,var(--accent)_35%,var(--line))] p-5">
+          <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--accent)]">
+            Fresh drop
           </p>
+          <p className="display text-2xl leading-snug text-[var(--ink)]">{caption}</p>
+          <p className="text-sm text-[var(--muted)]">
+            Saved with your prompt. It’s live on the feed — go get votes.
+          </p>
+          <Link href="/" className="btn-secondary text-sm">
+            Open the feed →
+          </Link>
         </div>
       )}
     </div>
