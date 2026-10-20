@@ -46,7 +46,7 @@ export async function Nav() {
             <Link href="/" className="hover:text-[var(--ink)]">
               Feed
             </Link>
-            {user ? (
+            {user && (
               <>
                 <Link href="/generate" className="hover:text-[var(--ink)]">
                   Generate
@@ -55,10 +55,6 @@ export async function Nav() {
                   Account
                 </Link>
               </>
-            ) : (
-              <Link href="/login" className="hover:text-[var(--ink)]">
-                Login
-              </Link>
             )}
           </div>
         </div>
