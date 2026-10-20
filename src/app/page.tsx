@@ -29,15 +29,20 @@ export default async function Home({
           you) actually come back on Friday night.
         </p>
         <div className="flex flex-wrap gap-3">
-          <Link
-            href={signedIn ? "/generate" : "/login?next=/generate"}
-            className="btn-primary"
-          >
-            {signedIn ? "Generate a caption" : "Sign in to generate"}
-          </Link>
-          <a href="#feed" className="btn-secondary">
-            Browse the feed
-          </a>
+          {signedIn ? (
+            <a href="#feed" className="btn-primary">
+              Browse the feed
+            </a>
+          ) : (
+            <>
+              <Link href="/login?next=/generate" className="btn-primary">
+                Sign in to generate
+              </Link>
+              <a href="#feed" className="btn-secondary">
+                Browse the feed
+              </a>
+            </>
+          )}
         </div>
       </section>
 
