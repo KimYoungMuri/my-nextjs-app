@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { generateWeekendCaption } from "@/lib/gemini";
+import { runCaptionPipeline } from "@/lib/gemini";
 
 export type ActionResult = {
   ok: boolean;
@@ -29,24 +29,42 @@ export async function createGeneration(prompt: string): Promise<ActionResult> {
     return { ok: false, error: "You must be signed in to generate." };
   }
 
-  let caption: string;
-  try {
-    caption = await generateWeekendCaption(trimmed);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "AI generation failed.";
-    return { ok: false, error: message };
+  const result = await runCaptionPipeline(supabase, user.id, trimmed);
+
+  async function finishRequest(values: {
+    status: "succeeded" | "failed";
+    error?: string;
+    generation_id?: number;
+  }) {
+    if (result.requestId === null) return;
+    await supabase
+      .from("generation_requests")
+      .update({ ...values, latency_ms: Date.now() - result.startedAt })
+      .eq("id", result.requestId);
   }
 
-  const { error } = await supabase.from("generations").insert({
-    user_id: user.id,
-    prompt: trimmed,
-    caption,
-  });
+  if (!result.ok) {
+    await finishRequest({ status: "failed", error: result.error.slice(0, 2000) });
+    return { ok: false, error: result.error };
+  }
+
+  const caption = result.caption;
+  const { data: generation, error } = await supabase
+    .from("generations")
+    .insert({
+      user_id: user.id,
+      prompt: trimmed,
+      caption,
+    })
+    .select("id")
+    .single();
 
   if (error) {
+    await finishRequest({ status: "failed", error: error.message });
     return { ok: false, error: error.message };
   }
+
+  await finishRequest({ status: "succeeded", generation_id: generation.id });
 
   revalidatePath("/");
   revalidatePath("/generate");

@@ -21,9 +21,25 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      const email = data.user?.email ?? "";
+      const { data: allowed, error: allowError } = await supabase.rpc(
+        "is_email_allowed",
+        { check_email: email },
+      );
+
+      // A missing function (SQL not run yet) shouldn't lock everyone out.
+      if (!allowError && allowed === false) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(
+          `${origin}/login?error=${encodeURIComponent(
+            `${email} isn't allowed to sign in. Ask an admin to add your email or domain.`,
+          )}`,
+        );
+      }
+
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 
