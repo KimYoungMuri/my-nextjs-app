@@ -25,10 +25,29 @@ const MAX_TERMS = 20;
 
 const FALLBACK_MODELS: ModelConfig[] = [
   "gemini-flash-latest",
-  "gemini-3.5-flash",
   "gemini-2.5-flash",
-  "gemini-2.0-flash",
 ].map((modelId) => ({ id: null, modelId, temperature: 0.95, maxOutputTokens: 512 }));
+
+/** Cap how long we wait on a single Gemini call so the UI doesn't spin forever. */
+const MODEL_TIMEOUT_MS = 20_000;
+/** Don't cascade through every model on failure — fail fast with a clear error. */
+const MAX_MODELS_PER_STEP = 2;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
 
 const FALLBACK_CHAIN: ChainConfig = {
   id: null,
@@ -179,9 +198,14 @@ export async function runCaptionPipeline(
       previous,
     });
 
-    const ordered = step.modelId
-      ? [...models.filter((m) => m.id === step.modelId), ...models.filter((m) => m.id !== step.modelId)]
-      : models;
+    const ordered = (
+      step.modelId
+        ? [
+            ...models.filter((m) => m.id === step.modelId),
+            ...models.filter((m) => m.id !== step.modelId),
+          ]
+        : models
+    ).slice(0, MAX_MODELS_PER_STEP);
 
     let output: string | null = null;
     const errors: string[] = [];
@@ -191,11 +215,15 @@ export async function runCaptionPipeline(
       let text: string | null = null;
       let failure: string | null = null;
       try {
-        const response = await ai.models.generateContent({
-          model: model.modelId,
-          contents: input,
-          config: { temperature: model.temperature, maxOutputTokens: model.maxOutputTokens },
-        });
+        const response = await withTimeout(
+          ai.models.generateContent({
+            model: model.modelId,
+            contents: input,
+            config: { temperature: model.temperature, maxOutputTokens: model.maxOutputTokens },
+          }),
+          MODEL_TIMEOUT_MS,
+          model.modelId,
+        );
         text = response.text?.trim() || null;
         if (!text) failure = "Empty response";
       } catch (error) {
