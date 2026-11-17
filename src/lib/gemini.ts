@@ -25,21 +25,25 @@ const MAX_TERMS = 20;
 
 const FALLBACK_MODELS: ModelConfig[] = [
   "gemini-flash-latest",
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
+  "gemini-3.8-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
 ].map((modelId) => ({ id: null, modelId, temperature: 0.95, maxOutputTokens: 512 }));
 
 /** Cap how long we wait on a single Gemini call so the UI doesn't spin forever. */
-const MODEL_TIMEOUT_MS = 35_000;
+const MODEL_TIMEOUT_MS = 45_000;
 /** Don't cascade through every model on failure — fail fast with a clear error. */
-const MAX_MODELS_PER_STEP = 3;
+const MAX_MODELS_PER_STEP = 4;
 
-/** Prefer stable Flash IDs; newer 3.x IDs have been timing out / 503ing. */
+/**
+ * New AI Studio keys (AQ.*) only allow Gemini 3.x / flash-latest.
+ * Older 2.x / 2.5 IDs return 404 for new users.
+ */
 const PREFERRED_MODEL_IDS = [
   "gemini-flash-latest",
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-2.0-flash",
+  "gemini-3.8-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
 ];
 
 function rankModels(models: ModelConfig[]): ModelConfig[] {
@@ -47,7 +51,10 @@ function rankModels(models: ModelConfig[]): ModelConfig[] {
     models.filter((m) => m.modelId === id),
   );
   const preferredSet = new Set(PREFERRED_MODEL_IDS);
-  const rest = models.filter((m) => !preferredSet.has(m.modelId));
+  // Skip retired 2.x IDs — new API keys get 404 on them.
+  const rest = models.filter(
+    (m) => !preferredSet.has(m.modelId) && !/^gemini-2(\.|$)/.test(m.modelId),
+  );
   const extras = PREFERRED_MODEL_IDS.filter(
     (id) => !models.some((m) => m.modelId === id),
   ).map((modelId) => ({
@@ -233,14 +240,17 @@ export async function runCaptionPipeline(
       previous,
     });
 
+    // Ignore per-step model pins that point at retired 2.x IDs for new API keys.
+    const stepPreferred = step.modelId
+      ? models.find((m) => m.id === step.modelId && PREFERRED_MODEL_IDS.includes(m.modelId))
+      : null;
     const ordered = (
-      step.modelId
-        ? [
-            ...models.filter((m) => m.id === step.modelId),
-            ...models.filter((m) => m.id !== step.modelId),
-          ]
+      stepPreferred
+        ? [stepPreferred, ...models.filter((m) => m.modelId !== stepPreferred.modelId)]
         : models
-    ).slice(0, MAX_MODELS_PER_STEP);
+    )
+      .filter((m) => !/^gemini-2(\.|$)/.test(m.modelId))
+      .slice(0, MAX_MODELS_PER_STEP);
 
     let output: string | null = null;
     const errors: string[] = [];
@@ -249,20 +259,30 @@ export async function runCaptionPipeline(
       const callStart = Date.now();
       let text: string | null = null;
       let failure: string | null = null;
-      try {
-        const response = await withTimeout(
-          ai.models.generateContent({
-            model: model.modelId,
-            contents: input,
-            config: { temperature: model.temperature, maxOutputTokens: model.maxOutputTokens },
-          }),
-          MODEL_TIMEOUT_MS,
-          model.modelId,
-        );
-        text = response.text?.trim() || null;
-        if (!text) failure = "Empty response";
-      } catch (error) {
-        failure = error instanceof Error ? error.message : String(error);
+      // One quick retry on transient 503 overload.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const response = await withTimeout(
+            ai.models.generateContent({
+              model: model.modelId,
+              contents: input,
+              config: { temperature: model.temperature, maxOutputTokens: model.maxOutputTokens },
+            }),
+            MODEL_TIMEOUT_MS,
+            model.modelId,
+          );
+          text = response.text?.trim() || null;
+          failure = text ? null : "Empty response";
+          if (!failure) break;
+        } catch (error) {
+          failure = error instanceof Error ? error.message : String(error);
+          const overloaded = /503|UNAVAILABLE|high demand/i.test(failure);
+          if (overloaded && attempt === 0) {
+            await new Promise((r) => setTimeout(r, 1500));
+            continue;
+          }
+          break;
+        }
       }
 
       if (requestId !== null) {
