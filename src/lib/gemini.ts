@@ -26,12 +26,46 @@ const MAX_TERMS = 20;
 const FALLBACK_MODELS: ModelConfig[] = [
   "gemini-flash-latest",
   "gemini-2.5-flash",
+  "gemini-2.0-flash",
 ].map((modelId) => ({ id: null, modelId, temperature: 0.95, maxOutputTokens: 512 }));
 
 /** Cap how long we wait on a single Gemini call so the UI doesn't spin forever. */
-const MODEL_TIMEOUT_MS = 20_000;
+const MODEL_TIMEOUT_MS = 35_000;
 /** Don't cascade through every model on failure — fail fast with a clear error. */
-const MAX_MODELS_PER_STEP = 2;
+const MAX_MODELS_PER_STEP = 3;
+
+/** Prefer stable Flash IDs; newer 3.x IDs have been timing out / 503ing. */
+const PREFERRED_MODEL_IDS = [
+  "gemini-flash-latest",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
+];
+
+function rankModels(models: ModelConfig[]): ModelConfig[] {
+  const preferred = PREFERRED_MODEL_IDS.flatMap((id) =>
+    models.filter((m) => m.modelId === id),
+  );
+  const preferredSet = new Set(PREFERRED_MODEL_IDS);
+  const rest = models.filter((m) => !preferredSet.has(m.modelId));
+  const extras = PREFERRED_MODEL_IDS.filter(
+    (id) => !models.some((m) => m.modelId === id),
+  ).map((modelId) => ({
+    id: null,
+    modelId,
+    temperature: 0.95,
+    maxOutputTokens: 512,
+  }));
+  // Dedupe by modelId, preferred first, then DB leftovers, then any missing preferred
+  const seen = new Set<string>();
+  const out: ModelConfig[] = [];
+  for (const m of [...preferred, ...extras, ...rest]) {
+    if (seen.has(m.modelId)) continue;
+    seen.add(m.modelId);
+    out.push(m);
+  }
+  return out.length > 0 ? out : FALLBACK_MODELS;
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -105,7 +139,7 @@ async function loadConfig(supabase: SupabaseClient) {
       .order("priority"),
   ]);
 
-  const modelList: ModelConfig[] =
+  const modelList = rankModels(
     !models.error && models.data.length > 0
       ? models.data.map((m) => ({
           id: m.id,
@@ -113,7 +147,8 @@ async function loadConfig(supabase: SupabaseClient) {
           temperature: Number(m.temperature),
           maxOutputTokens: m.max_output_tokens,
         }))
-      : FALLBACK_MODELS;
+      : FALLBACK_MODELS,
+  );
 
   let chain = FALLBACK_CHAIN;
   const picked = mix.error ? null : pickWeighted(mix.data ?? []);
